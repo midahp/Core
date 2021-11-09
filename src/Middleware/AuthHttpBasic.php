@@ -29,6 +29,7 @@ use Horde_Core_Auth_Application;
 class AuthHttpBasic implements MiddlewareInterface
 {
     private $driver;
+    private Horde_Registry $registry;
     /**
      * Constructor
      * 
@@ -36,9 +37,11 @@ class AuthHttpBasic implements MiddlewareInterface
      *
      * @param object $driver
      */
-    public function __construct(Horde_Auth_Base $driver)
+    public function __construct(Horde_Auth_Base $driver, Horde_Registry $registry)
     {
         $this->driver = $driver;
+        $this->registry = $registry;
+
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
