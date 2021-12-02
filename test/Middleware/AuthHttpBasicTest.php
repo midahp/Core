@@ -27,19 +27,50 @@ class AuthHttpBasicTest extends TestCase
             $this->registry
         );
     }
+   
 
     public function testNotAuthenticated()  //test ob user nicht authentifiziert
     {
         $username = 'testUser01';
+        
         $this->authDriver->method('authenticate')->willReturn(false);
         $this->registry->method('getAuth')->willReturn($username);
         $request = $this->requestFactory->createServerRequest('GET', '/test');
         $middleware = $this->getMiddleware();
         $response = $middleware->process($request, $this->handler);
-
+        
         $noAuthHeader = $this->recentlyHandledRequest->getAttribute('NO_AUTH_HEADER');
-
-        // test if $noAuthHeader has the correct value
+        $notAuth=$this->recentlyHandledRequest->getAttribute('HORDE_AUTHENTICATED_USER', 'asdfasdfs'); //gibt fehler aus
+        print_r($notAuth);
         $this->assertEquals($username, $noAuthHeader);
+        $this->assertEquals($username,$notAuth);
+           
+
     }
+    
+   
+    public function testAuthenticated()  //test ob user authentifiziert
+    {
+        $username = 'testUser01';
+        
+        
+        $this->authDriver->method('authenticate')->willReturn(true);
+        $this->registry->method('getAuth')->willReturn($username);
+        $request = $this->requestFactory->createServerRequest('GET', '/test');
+        $middleware = $this->getMiddleware();
+        $response = $middleware->process($request, $this->handler);
+        
+        $noAuthHeader = $this->recentlyHandledRequest->getAttribute('NO_AUTH_HEADER');
+        $Auth=$this->recentlyHandledRequest->getAttribute('HORDE_AUTHENTICATED_USER', $username);
+        $this->assertEquals($username, $noAuthHeader);
+        $this->assertEquals($username,$Auth);
+
+        
+       
+
+    }
+    
+
+    
+    
 }
