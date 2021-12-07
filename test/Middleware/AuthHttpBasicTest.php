@@ -39,11 +39,10 @@ class AuthHttpBasicTest extends TestCase
         $middleware = $this->getMiddleware();
         $response = $middleware->process($request, $this->handler);
         
-        $noAuthHeader = $this->recentlyHandledRequest->getAttribute('NO_AUTH_HEADER'); // ohne authorization header
-   
-        $yesAuthHeader= $this->recentlyHandledRequest->getAttribute('HORDE_AUTHENTICATED_USER'); //nicht authentifiziert mit authorization Header
-       
-        $notAuth=$this->recentlyHandledRequest->getAttribute('NO_AUTH_HEADER')->withAttribute('HORDE_AUTHENTICATED_USER','');
+        $noAuthHeader = $this->recentlyHandledRequest->getAttribute('NO_AUTH_HEADER'); //ohne authorization header
+        $yesAuthHeader= $this->recentlyHandledRequest->getAttribute('HORDE_AUTHENTICATED_USER'); // mit authorization Header
+        $notAuth=$this->recentlyHandledRequest->getAttribute('HORDE_AUTHENTICATED_USER');
+        
         $this->assertNull($notAuth); //not authenticated
         $this->assertEquals($username, $noAuthHeader);
         $this->assertNull($yesAuthHeader); //has header but did not authenticate
