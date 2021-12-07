@@ -39,13 +39,16 @@ class AuthHttpBasicTest extends TestCase
         $middleware = $this->getMiddleware();
         $response = $middleware->process($request, $this->handler);
         
-        $noAuthHeader = $this->recentlyHandledRequest->getAttribute('NO_AUTH_HEADER');
-        $notAuth=$this->recentlyHandledRequest->getAttribute('HORDE_AUTHENTICATED_USER', 'asdfasdfs'); //gibt fehler aus
-        print_r($notAuth);
+        $noAuthHeader = $this->recentlyHandledRequest->getAttribute('NO_AUTH_HEADER'); // ohne authorization header
+   
+        $yesAuthHeader= $this->recentlyHandledRequest->getAttribute('HORDE_AUTHENTICATED_USER'); //nicht authentifiziert mit authorization Header
+       
+        $notAuth=$this->recentlyHandledRequest->getAttribute('NO_AUTH_HEADER')->withAttribute('HORDE_AUTHENTICATED_USER','');
+        $this->assertNull($notAuth); //not authenticated
         $this->assertEquals($username, $noAuthHeader);
-        $this->assertEquals($username,$notAuth);
-           
-
+        $this->assertNull($yesAuthHeader); //has header but did not authenticate
+        
+      
     }
     
    
@@ -53,24 +56,18 @@ class AuthHttpBasicTest extends TestCase
     {
         $username = 'testUser01';
         
-        
+         
         $this->authDriver->method('authenticate')->willReturn(true);
         $this->registry->method('getAuth')->willReturn($username);
         $request = $this->requestFactory->createServerRequest('GET', '/test');
         $middleware = $this->getMiddleware();
         $response = $middleware->process($request, $this->handler);
         
-        $noAuthHeader = $this->recentlyHandledRequest->getAttribute('NO_AUTH_HEADER');
-        $Auth=$this->recentlyHandledRequest->getAttribute('HORDE_AUTHENTICATED_USER', $username);
+        $noAuthHeader = $this->recentlyHandledRequest->getAttribute('NO_AUTH_HEADER'); //authentifiziert ohne authheader
+       // $Auth=$this->recentlyHandledRequest->withheader('Authorization')->getAttribute('HORDE_AUTHENTICATED_USER');
         $this->assertEquals($username, $noAuthHeader);
-        $this->assertEquals($username,$Auth);
-
-        
+       // $this->assertNull($Auth);
        
-
     }
-    
-
-    
     
 }
