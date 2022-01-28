@@ -36,7 +36,7 @@ class AuthHttpBasicTest extends TestCase
 
         //not authenticated
         $this->authDriver->method('authenticate')->willReturn(false); 
-        //new login request
+        
         $this->registry->method('getAuth')->willReturn($username);
         
         $request = $this->requestFactory->createServerRequest('GET', '/test');
@@ -58,28 +58,32 @@ class AuthHttpBasicTest extends TestCase
     public function testNotAuthenticatedWithHeader()  
     {
         $username = 'testUser01';
-        
+        $password = 'testPw';
+        $authString = base64_encode(sprintf('%s:%s', $username, $password));
+
+        //with Header
+        $request = $this->requestFactory->createServerRequest('GET', '/test')->withHeader('Authorization','BASIC ' . $authString);
+
         //not authenticated
         $this->authDriver->method('authenticate')->willReturn(false);
 
         $this->registry->method('getAuth')->willReturn($username);
         
         
-        //with authorization header 
-        $request = $this->requestFactory->createServerRequest('GET', '/test')->withHeader('Authorization','BASIC YXNkZjphc2QxMjM=');
+        
         $middleware = $this->getMiddleware();
         $response = $middleware->process($request, $this->handler);
         
-        $authHeader = $this->recentlyHandledRequest->hasHeader('Authorization');
+        $authHeader = $this->recentlyHandledRequest->getAttribute('NO_AUTH_HEADER');
 
-        $notAuth=$this->recentlyHandledRequest->getAttribute('HORDE_AUTHENTICATED_USER');
+        $authenticatedUser=$this->recentlyHandledRequest->getAttribute('HORDE_AUTHENTICATED_USER');
         
         
-        //header available
-        $this->assertTrue($authHeader);  
         
-        //NULL
-        $this->assertNull($notAuth);      
+        $this->assertNull($authHeader);  
+        
+        
+        $this->assertNull($authenticatedUser);      
         
         
     }
@@ -87,10 +91,14 @@ class AuthHttpBasicTest extends TestCase
     public function testAuthenticatedwithoutHeader()  //test ob user authentifiziert
     {
         $username = 'testUser01';
+        $password = 'testPw';
+        $authString = base64_encode(sprintf('%s:%s', $username, $password));
+
+        
 
         
      
-         //authenticated USER AND PW accepted
+        //authenticated USER AND PW accepted
         $this->authDriver->method('authenticate')->willReturn(true);
         
         $this->registry->method('getAuth')->willReturn($username);
@@ -101,45 +109,67 @@ class AuthHttpBasicTest extends TestCase
         $response = $middleware->process($request, $this->handler);
 
         $noAuthHeader = $this->recentlyHandledRequest->getAttribute('NO_AUTH_HEADER'); 
-        $auth=$this->recentlyHandledRequest->getAttribute('HORDE_AUTHENTICATED_USER',$username); 
+        $authenticatedUser=$this->recentlyHandledRequest->getAttribute('HORDE_AUTHENTICATED_USER'); 
 
+        
         $this->assertEquals($username,$noAuthHeader);
-        $this->assertNotNull($auth);
-    
+        $this->assertNull($authenticatedUser);
+        $this->assertEquals($this->defaultPayloadResponse, $response);
+
        
     }
 
-    public function testAuthenticatedwithHeader(){
+    public function testAuthenticatedwithBasicHeader(){
 
         $username = 'testUser01';
-        
+        $password = 'testPw';
+        $authString = base64_encode(sprintf('%s:%s', $username, $password));
         
         $this->authDriver->method('authenticate')->willReturn(true);
 
         $this->registry->method('getAuth')->willReturn($username);
-        
+
+        $request = $this->requestFactory->createServerRequest('GET', '/test')->withHeader('Authorization','BASIC ' . $authString);
+  
         
         //with authorization header
-        $request = $this->requestFactory->createServerRequest('GET', '/test')->withHeader('Authorization','BASIC dGVzdFVzZXIwMTpwYXNzd29yZA==');
         $middleware = $this->getMiddleware();
         $response = $middleware->process($request, $this->handler);
         
-        $authHeader = $this->recentlyHandledRequest->hasHeader('Authorization');
+        
 
         $auth=$this->recentlyHandledRequest->getAttribute('HORDE_AUTHENTICATED_USER');
-        
-        
-        //header available
-        $this->assertTrue($authHeader);  
-        
-        //NULL= notauthenticated
-        $this->assertEquals($username,$auth);      
-        
-        
+        $this->assertEquals($username,$auth);
+       // $this->assertEquals($username,$auth);      
+       $this->assertEquals($this->defaultPayloadResponse, $response);
+
 
     }
 
+    public function testAuthenticatedNoBasicHeader(){
+        $username = 'testUser01';
+        $password = 'testPw';
+        $authString = base64_encode(sprintf('%s:%s', $username, $password));
+        
+        $this->authDriver->method('authenticate')->willReturn(true);
 
+        $this->registry->method('getAuth')->willReturn($username);
+        $request = $this->requestFactory->createServerRequest('GET', '/test')->withoutHeader('Authorization','BASIC ' . $authString);
+
+        $middleware = $this->getMiddleware();
+        $response = $middleware->process($request, $this->handler);
+        
+        
+        $noAuthHeader = $this->recentlyHandledRequest->getAttribute('NO_AUTH_HEADER'); 
+        $authenticatedUser=$this->recentlyHandledRequest->getAttribute('HORDE_AUTHENTICATED_USER'); 
+
+        
+        $this->assertEquals($username,$noAuthHeader);
+        $this->assertNull($authenticatedUser);
+        $this->assertEquals($this->defaultPayloadResponse, $response);
+
+  
+    }
 
     
 
